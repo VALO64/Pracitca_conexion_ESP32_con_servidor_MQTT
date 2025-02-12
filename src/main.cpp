@@ -4,30 +4,31 @@
  ** Oscar Alberto Valles Limas                                            **
  ** Instituto tecnológico de Chihuahua                                    **
  ***************************************************************************
- ***************************************************************************
-*/
-#include <Arduino.h> //Libreria que agrega automáticamente platform.io
+ ***************************************************************************/  
 
-#include <WiFi.h> //Libreria para utilizar red en la ESP32 
-#include <PubSubClient.h> //Libreria para la conexión con HiveMQ
-#include <WiFiClientSecure.h> //Libreria para conexión a redes de internet 
-
-const char* ssid = "IZZI-7E6C"; //Nombre de la red a conectarse 
-const char* password = "50A5DC507E6C"; //Password de la red 
-
-const char* mqtt_server = "3baa2ee357f2493dacd65f0f254ac39f.s1.eu.hivemq.cloud"; //URL de HiveMq
-const int mqtt_port = 8883; //Puerto, por lo general ese es el predeterminado 
-const char* mqtt_username = "Prueba"; //Username de la credencial 
-const char* mqtt_password = "Itch1234"; //Password de la credencial 
-
-// Definición de los canales a utilizar
-const char* CONTROL_LED_TOPIC = "control-led"; //Nombre del topico que se va a utilizar en Hivemq para controlar el encendido de un led 
-
-const int ledPin = 5;
-//------------------------------------------------------------------------------------------
-//Certificado para poder utilizar Hivemq, no modificar 
-static const char* root_ca PROGMEM = R"EOF(
------BEGIN CERTIFICATE-----
+ #include <Arduino.h> //Libreria que agrega automáticamente platform.io
+ #include <WiFi.h> //Libreria para utilizar red en la ESP32 
+ #include <PubSubClient.h> //Libreria para la conexión con HiveMQ
+ #include <WiFiClientSecure.h> //Libreria para conexión a redes de internet 
+ 
+ const char* ssid = "IZZI-7E6C"; //Nombre de la red a conectarse 
+ const char* password = "50A5DC507E6C"; //Password de la red 
+ 
+ const char* mqtt_server = "3baa2ee357f2493dacd65f0f254ac39f.s1.eu.hivemq.cloud"; //URL de HiveMq
+ const int mqtt_port = 8883; //Puerto, por lo general ese es el predeterminado 
+ const char* mqtt_username = "Prueba"; //Username de la credencial 
+ const char* mqtt_password = "Itch1234"; //Password de la credencial 
+ 
+ // Definición de los canales a utilizar
+ const char* CONTROL_LED_TOPIC = "control-led"; //Nombre del topico que se va a utilizar en Hivemq para controlar el encendido de un led 
+ 
+ const int ledPin = 5; //Pin numero 5 de la ESP32
+ const int ledPin2 = 18; //Pin numero 18 de la ESP32
+ 
+ //------------------------------------------------------------------------------------------
+ //Certificado para poder utilizar Hivemq, no modificar 
+ static const char* root_ca PROGMEM = R"EOF(
+ -----BEGIN CERTIFICATE-----
 MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw
 TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh
 cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMTUwNjA0MTEwNDM4
@@ -59,68 +60,88 @@ mRGunUHBcnWEvgJBQl9nJEiU0Zsnvgc/ubhPgXRR4Xq37Z0j4r7g1SgEEzwxA57d
 emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
 -----END CERTIFICATE-----
 )EOF";
-
-WiFiClientSecure espClient;
-PubSubClient client(espClient);
-
-unsigned long lastMsg = 0;
-char msg[50];
-//-------------------------------------------------------------------------------
-void setup_wifi() { //Configuracion del wifi 
-  delay(10); //Un retraso de 10 milisegundos 
-  Serial.println(); //Se imprime un espacio
-  Serial.print("Connecting to "); //Se imprime un mensaje 
-  Serial.println(ssid); //Se imprime el nombre de la red 
-  WiFi.begin(ssid, password); //Se inicia la coneccion con la red
-  while (WiFi.status() != WL_CONNECTED) { //While en la cual mientras se conecta a la red aparecen puntos de carga 
-    delay(500); //Retardo de medio segundo 
-    Serial.print("."); //Imprecion de puntos de carga 
-  } //Final del while 
-  Serial.println(""); //Se imprime una linea de espacio 
-  Serial.println("WiFi connected"); //Aparece un mensaje una ves que la conexion se establece 
-  Serial.println("IP address: "); //Se imprime un mensaje mostrando que lo siguiente sera una IP 
-  Serial.println(WiFi.localIP()); //Se imprime la direccion IP
-}
-
-void callback(char* topic, byte* payload, unsigned int length) { //Funcion para impresion de las publicaciones 
-  Serial.print("Mensaje recibido en el canal: "); //Impresion de mensaje
-  Serial.println(topic); //Impresion de mensaje 
-
-  if (strcmp(topic, CONTROL_LED_TOPIC) == 0) { //Condicional if para mostrar el estado del led 
-    int estado = payload[0] - '0'; //Estado general 0 (Apagado\)
-    digitalWrite(ledPin, estado); //Se lee el estado del led 
-    Serial.print("Estado del LED: "); //Impresion de mensaje 
-    Serial.println(estado); //Se imprimie el estado del led =  0 (Apagado), 1 (Encendido)
-  } 
-}
-
-void reconnect() { //Funcion en caso de que se pierda la conxion con el servidor 
-  while (!client.connected()) { //Mientras no exista conexion con el servidor va a realizar lo siguiente 
-    Serial.print("Attempting MQTT connection..."); //Impresion de mensaje 
-    if (client.connect("ESP32Client", mqtt_username, mqtt_password)) { //Funcion en la cual se intentan poner las credenciales de nuevo 
-      Serial.println("connected"); //Mensaje de conexion 
-      client.subscribe(CONTROL_LED_TOPIC); //Se vuelve a suscribir los topicos que se definieron con anterioridad 
-    } else { //En caso de que no se establezca la conexion correctamente 
-      Serial.print("failed, rc="); //Impresion de mensaje de error
-      Serial.print(client.state()); //Impresion del estado de la conexion 
-      Serial.println(" try again in 5 seconds"); //Se imprime un mensaje 
-      delay(5000); //Retraso de 5 segundos para que vuelva a intentar una conexion 
-    }
-  }
-}
-
-void setup() { //Definicion de pines y funciones 
-  pinMode(ledPin, OUTPUT); //Se define el pin del led como una salida
-  Serial.begin(9600); //Baud rate 
-  setup_wifi(); //Se llama o se invoca la funcion de wifi para su conexion 
-  espClient.setCACert(root_ca); //Fimcopm de super su 
-  client.setServer(mqtt_server, mqtt_port); //Funcion para definir o configurar la conexion con el servidor mqtt
-  client.setCallback(callback); //Funcion del call back para imprimir todos los mensajes necesarios 
-}
-
-void loop() { //Definicion del loop para que re intente la conexion las veces que sean necesarias  
-  if (!client.connected()) { //Funcion para la reconexion invocando la funcion que se configuro previamente 
-    reconnect(); //Funcion reconectar 
-  }
-  client.loop(); //Apuntador al loop para que lo haga de manera infinita hasta que se conecte
-}
+ 
+ WiFiClientSecure espClient;
+ PubSubClient client(espClient);
+ 
+ unsigned long lastMsg = 0;
+ char msg[50];
+ //-------------------------------------------------------------------------------
+ void setup_wifi() { //Configuracion del wifi 
+   delay(10); //Un retraso de 10 milisegundos 
+   Serial.println(); //Se imprime un espacio
+   Serial.print("Connecting to "); //Se imprime un mensaje 
+   Serial.println(ssid); //Se imprime el nombre de la red 
+   WiFi.begin(ssid, password); //Se inicia la conexión con la red
+   while (WiFi.status() != WL_CONNECTED) { //Mientras se conecta a la red aparecen puntos de carga 
+     delay(500); //Retardo de medio segundo 
+     Serial.print("."); //Impresión de puntos de carga 
+   } 
+   Serial.println("\nWiFi connected"); //Mensaje de conexión establecida 
+   Serial.println("IP address: "); 
+   Serial.println(WiFi.localIP()); //Se imprime la dirección IP
+ }
+ 
+ void callback(char* topic, byte* payload, unsigned int length) { //Función para manejar mensajes MQTT  
+   Serial.print("Mensaje recibido en el canal: ");
+   Serial.println(topic); 
+ 
+   // Convertir el payload a una cadena para compararlo con "0" o "1"
+   String mensaje = "";
+   for (unsigned int i = 0; i < length; i++) {
+     mensaje += (char)payload[i];
+   }
+   Serial.print("Mensaje recibido: ");
+   Serial.println(mensaje);
+ 
+   if (strcmp(topic, CONTROL_LED_TOPIC) == 0) { //Verificar si el mensaje es para controlar los LEDs
+     if (mensaje == "1") { 
+       digitalWrite(ledPin, HIGH);  // Encender LED en pin 5
+       digitalWrite(ledPin2, LOW);  // Apagar LED en pin 18
+       Serial.println("Led en pin 5 encendido, Led en pin 18 apagado");
+     } 
+     else if (mensaje == "0") { 
+       digitalWrite(ledPin, LOW);   // Apagar LED en pin 5
+       digitalWrite(ledPin2, HIGH); // Encender LED en pin 18
+       Serial.println("Led en pin 5 apagado, Led en pin 18 encendido");
+     }
+   }
+ }
+ 
+ void reconnect() { //Función en caso de que se pierda la conexión con el servidor MQTT
+   while (!client.connected()) { //Mientras no exista conexión con el servidor MQTT
+     Serial.print("Attempting MQTT connection..."); 
+     if (client.connect("ESP32Client", mqtt_username, mqtt_password)) { 
+       Serial.println("connected"); 
+       client.subscribe(CONTROL_LED_TOPIC); //Suscribirse nuevamente al tópico MQTT
+     } else { 
+       Serial.print("failed, rc="); 
+       Serial.print(client.state()); 
+       Serial.println(" try again in 5 seconds"); 
+       delay(5000); //Esperar 5 segundos antes de intentar reconectar
+     }
+   }
+ }
+ 
+ void setup() { //Definición de pines y funciones 
+   pinMode(ledPin, OUTPUT);  //Definir el pin 5 como salida
+   pinMode(ledPin2, OUTPUT); //Definir el pin 18 como salida
+ 
+   // Estado inicial
+   digitalWrite(ledPin, LOW);  // LED en pin 5 apagado
+   digitalWrite(ledPin2, HIGH); // LED en pin 18 encendido
+ 
+   Serial.begin(9600); //Baud rate 
+   setup_wifi(); //Conexión a WiFi
+   espClient.setCACert(root_ca); //Configurar certificado para MQTT seguro
+   client.setServer(mqtt_server, mqtt_port); //Configurar servidor MQTT
+   client.setCallback(callback); //Definir callback para manejar mensajes MQTT
+ }
+ 
+ void loop() { //Bucle principal
+   if (!client.connected()) { //Si la conexión MQTT se pierde, reconectar
+     reconnect();
+   }
+   client.loop(); //Mantener la conexión MQTT activa
+ }
+ 
