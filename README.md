@@ -15,7 +15,7 @@
 
 ## **Circuito fisico**
 -------------------------------------------------------------------------------------------
-![WhatsApp Image 2025-02-09 at 17 35 53_b120ee8b](https://github.com/user-attachments/assets/6fc128e0-8d72-4681-8e72-87f828012202)
+![WhatsApp Image 2025-02-15 at 20 16 59_6d778548](https://github.com/user-attachments/assets/c238abff-3887-4a8b-b503-9f7c9a92b463)
 
 ## **UI con Node-Red**
 -------------------------------------------------------------------------------------------
