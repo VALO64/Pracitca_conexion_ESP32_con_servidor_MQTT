@@ -24,6 +24,9 @@
  
  const int ledPin = 5; //Pin numero 5 de la ESP32
  const int ledPin2 = 18; //Pin numero 18 de la ESP32
+ const int controlM1 = 21; //Control manual pin 18 (Verde)
+ const int controlM2 = 22; //Control manual pin 22 (Azul)
+
  
  //------------------------------------------------------------------------------------------
  //Certificado para poder utilizar Hivemq, no modificar 
@@ -61,87 +64,112 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
 -----END CERTIFICATE-----
 )EOF";
  
- WiFiClientSecure espClient;
- PubSubClient client(espClient);
- 
- unsigned long lastMsg = 0;
- char msg[50];
+WiFiClientSecure espClient;
+PubSubClient client(espClient);
+
  //-------------------------------------------------------------------------------
  void setup_wifi() { //Configuracion del wifi 
-   delay(10); //Un retraso de 10 milisegundos 
-   Serial.println(); //Se imprime un espacio
-   Serial.print("Connecting to "); //Se imprime un mensaje 
-   Serial.println(ssid); //Se imprime el nombre de la red 
-   WiFi.begin(ssid, password); //Se inicia la conexión con la red
-   while (WiFi.status() != WL_CONNECTED) { //Mientras se conecta a la red aparecen puntos de carga 
-     delay(500); //Retardo de medio segundo 
-     Serial.print("."); //Impresión de puntos de carga 
-   } 
-   Serial.println("\nWiFi connected"); //Mensaje de conexión establecida 
-   Serial.println("IP address: "); 
-   Serial.println(WiFi.localIP()); //Se imprime la dirección IP
- }
- 
- void callback(char* topic, byte* payload, unsigned int length) { //Función para manejar mensajes MQTT  
-   Serial.print("Mensaje recibido en el canal: ");
-   Serial.println(topic); 
- 
-   // Convertir el payload a una cadena para compararlo con "0" o "1"
-   String mensaje = "";
-   for (unsigned int i = 0; i < length; i++) {
-     mensaje += (char)payload[i];
-   }
-   Serial.print("Mensaje recibido: ");
-   Serial.println(mensaje);
- 
-   if (strcmp(topic, CONTROL_LED_TOPIC) == 0) { //Verificar si el mensaje es para controlar los LEDs
-     if (mensaje == "1") { 
-       digitalWrite(ledPin, HIGH);  // Encender LED en pin 5
-       digitalWrite(ledPin2, LOW);  // Apagar LED en pin 18
-       Serial.println("Led en pin 5 encendido, Led en pin 18 apagado");
-     } 
-     else if (mensaje == "0") { 
-       digitalWrite(ledPin, LOW);   // Apagar LED en pin 5
-       digitalWrite(ledPin2, HIGH); // Encender LED en pin 18
-       Serial.println("Led en pin 5 apagado, Led en pin 18 encendido");
-     }
-   }
- }
- 
- void reconnect() { //Función en caso de que se pierda la conexión con el servidor MQTT
-   while (!client.connected()) { //Mientras no exista conexión con el servidor MQTT
-     Serial.print("Attempting MQTT connection..."); 
-     if (client.connect("ESP32Client", mqtt_username, mqtt_password)) { 
-       Serial.println("connected"); 
-       client.subscribe(CONTROL_LED_TOPIC); //Suscribirse nuevamente al tópico MQTT
-     } else { 
-       Serial.print("failed, rc="); 
-       Serial.print(client.state()); 
-       Serial.println(" try again in 5 seconds"); 
-       delay(5000); //Esperar 5 segundos antes de intentar reconectar
-     }
-   }
- }
- 
- void setup() { //Definición de pines y funciones 
-   pinMode(ledPin, OUTPUT);  //Definir el pin 5 como salida
-   pinMode(ledPin2, OUTPUT); //Definir el pin 18 como salida
- 
+  delay(10); //Un retraso de 10 milisegundos 
+  Serial.println(); //Se imprime un espacio
+  Serial.print("Connecting to "); //Se imprime un mensaje 
+  Serial.println(ssid); //Se imprime el nombre de la red 
+  WiFi.begin(ssid, password); //Se inicia la conexión con la red
+  while (WiFi.status() != WL_CONNECTED) { //Mientras se conecta a la red aparecen puntos de carga 
+    delay(500); //Retardo de medio segundo 
+    Serial.print("."); //Impresión de puntos de carga 
+  } 
+  Serial.println("\nWiFi connected"); //Mensaje de conexión establecida 
+  Serial.println("IP address: "); 
+  Serial.println(WiFi.localIP()); //Se imprime la dirección IP
+}
+
+void callback(char* topic, byte* payload, unsigned int length) { //Función para manejar mensajes MQTT  
+  Serial.print("Mensaje recibido en el canal: ");
+  Serial.println(topic); 
+
+  // Convertir el payload a una cadena para compararlo con "0" o "1"
+  String mensaje = "";
+  for (unsigned int i = 0; i < length; i++) {
+    mensaje += (char)payload[i];
+  }
+  Serial.print("Mensaje recibido: ");
+  Serial.println(mensaje);
+
+  if (strcmp(topic, CONTROL_LED_TOPIC) == 0) { //Verificar si el mensaje es para controlar los LEDs
+    if (mensaje == "1") { 
+      digitalWrite(ledPin, HIGH);  // Encender LED en pin 5
+      digitalWrite(ledPin2, LOW);  // Apagar LED en pin 18
+      Serial.println("Led en pin 5 encendido, Led en pin 18 apagado");
+    } 
+    else if (mensaje == "0") { 
+      digitalWrite(ledPin, LOW);   // Apagar LED en pin 5
+      digitalWrite(ledPin2, HIGH); // Encender LED en pin 18
+      Serial.println("Led en pin 5 apagado, Led en pin 18 encendido");
+    }
+  }
+}
+
+void reconnect() { //Función en caso de que se pierda la conexión con el servidor MQTT
+  while (!client.connected()) { //Mientras no exista conexión con el servidor MQTT
+    Serial.print("Attempting MQTT connection..."); 
+    if (client.connect("ESP32Client", mqtt_username, mqtt_password)) { 
+      Serial.println("connected"); 
+      client.subscribe(CONTROL_LED_TOPIC); //Suscribirse nuevamente al tópico MQTT
+    } else { 
+      Serial.print("failed, rc="); 
+      Serial.print(client.state()); 
+      Serial.println(" try again in 5 seconds"); 
+      delay(5000); //Esperar 5 segundos antes de intentar reconectar
+    }
+  }
+}
+
+void setup() { //Definición de pines y funciones 
+  pinMode(ledPin, OUTPUT);  //Definir el pin 5 como salida
+  pinMode(ledPin2, OUTPUT); //Definir el pin 18 como salida
+  pinMode(controlM1, INPUT); //Definir el pin 21 como entrada 
+  pinMode(controlM2, INPUT); //Definir el pin 22 como entrada 
    // Estado inicial
-   digitalWrite(ledPin, LOW);  // LED en pin 5 apagado
-   digitalWrite(ledPin2, HIGH); // LED en pin 18 encendido
- 
-   Serial.begin(9600); //Baud rate 
-   setup_wifi(); //Conexión a WiFi
-   espClient.setCACert(root_ca); //Configurar certificado para MQTT seguro
-   client.setServer(mqtt_server, mqtt_port); //Configurar servidor MQTT
-   client.setCallback(callback); //Definir callback para manejar mensajes MQTT
- }
- 
- void loop() { //Bucle principal
-   if (!client.connected()) { //Si la conexión MQTT se pierde, reconectar
-     reconnect();
-   }
-   client.loop(); //Mantener la conexión MQTT activa
- }
+  digitalWrite(ledPin, LOW);  // LED en pin 5 apagado
+  digitalWrite(ledPin2, HIGH); // LED en pin 18 encendido
+
+  Serial.begin(9600); //Baud rate 
+  setup_wifi(); //Conexión a WiFi
+  espClient.setCACert(root_ca); //Configurar certificado para MQTT seguro
+  client.setServer(mqtt_server, mqtt_port); //Configurar servidor MQTT
+  client.setCallback(callback); //Definir callback para manejar mensajes MQTT
+}
+
+void loop() { //Bucle principal
+  static bool estadoAnteriorM1 = LOW; //Definicion variable estatica, predeterminada en bajo
+  static bool estadoAnteriorM2 = LOW; //Definicion variable estatica, predeterminada en bajo
+  static unsigned long ultimaLecturaM1 = 0; //Variable estatica sin defenir como 0
+  static unsigned long ultimaLecturaM2 = 0; //Variable estatica sin defenir como 0
+  unsigned long tiempoActual = millis(); //Variable para controlar el rebote 
+
+  int estadoControlM1 = digitalRead(controlM1); //Variable para leer el estado actual del boton
+  int estadoControlM2 = digitalRead(controlM2); //Variable para leer el estado actual del boton
+
+  if (estadoControlM1 == HIGH && estadoAnteriorM1 == LOW && (tiempoActual - ultimaLecturaM1) > 200) { //Condicional en la cual se lee el boton presionado y berifica el estado anterior a su vez se aplica el anti rebote
+    Serial.println("Apertura"); //Inpresion del mensaje 
+    digitalWrite(ledPin, HIGH); //Led del pin 5 encendido
+    digitalWrite(ledPin2, LOW); //led del pin 18 apagado
+    ultimaLecturaM1 = tiempoActual; //Se igualan las variables de tiempo de lectura y el tiempo actual 
+  }
+  estadoAnteriorM1 = estadoControlM1; //Se igualan las variables del estado anterior al estado del control o boton
+
+  if (estadoControlM2 == HIGH && estadoAnteriorM2 == LOW && (tiempoActual - ultimaLecturaM2) > 200) { //Condicional en la cual se lee el boton presionado y berifica el estado anterior a su vez se aplica el anti rebote
+    Serial.println("Cierre"); //Impresion del mensaje 
+    digitalWrite(ledPin, LOW); //led del pin 5 apagado 
+    digitalWrite(ledPin2, HIGH); //Led del pin 18 encendido 
+    ultimaLecturaM2 = tiempoActual; //Se igualan las variables de tiempo de lectura y el tiempo actual 
+  }
+  estadoAnteriorM2 = estadoControlM2; //Se igualan las variables del estado anterior al estado del control o boton
+
+  if (!client.connected()) { //Intenta una reconexion 
+    reconnect(); //Invoca la funcion de reconecion 
+  }
+  client.loop(); //Apuntador a la funcion loop
+}
+
  
