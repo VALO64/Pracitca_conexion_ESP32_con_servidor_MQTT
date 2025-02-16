@@ -1,0 +1,29 @@
+# Conexión ESP32 con servidor MQTT utilizando HiveMQ
+
+**Matierial**
+  - ESP32
+  - Node-Red
+  - 2 led
+  - cables
+  - 2 resistencia 220 ohms
+  - 2 resistencias de pull-up
+  - 2 botones
+  - HiveMQ acc
+
+***Topicos utilizados***
+- control-led
+-------------------------------------------------------------------------------------------
+![image](https://github.com/user-attachments/assets/6e667394-6b5c-4d33-ba02-4200e9128fae)
+
+## **Circuito fisico**
+-------------------------------------------------------------------------------------------
+![WhatsApp Image 2025-02-15 at 20 16 59_6d778548](https://github.com/user-attachments/assets/1329e5ae-50a1-4811-9d87-cd57d5211970)
+
+
+## **UI con Node-Red**
+-------------------------------------------------------------------------------------------
+![image](https://github.com/user-attachments/assets/1e06f073-730d-401b-9efc-159126500279)
+
+## **Bloques utilizados en Node-Red**
+-------------------------------------------------------------------------------------------
+![image](https://github.com/user-attachments/assets/308558aa-f192-4d6c-a3bc-2f22171a7262)
