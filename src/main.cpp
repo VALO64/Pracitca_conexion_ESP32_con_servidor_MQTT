@@ -21,7 +21,7 @@
  
  // Definición de los canales a utilizar
  const char* CONTROL_LED_TOPIC = "control-led"; //Nombre del topico que se va a utilizar en Hivemq para controlar el encendido de un led 
- 
+ const char* CONTROL_LED_TOPIC_1 = "control-led-esp-1"; //Nombre del topico para controlar la esp1, editar dependiendo de cual ESP se quiere utilizar 
  const int ledPin = 5; //Pin numero 5 de la ESP32
  const int ledPin2 = 18; //Pin numero 18 de la ESP32
  const int controlM1 = 21; //Control manual pin 18 (Verde)
@@ -95,7 +95,7 @@ void callback(char* topic, byte* payload, unsigned int length) { //Función para
   Serial.print("Mensaje recibido: ");
   Serial.println(mensaje);
 
-  if (strcmp(topic, CONTROL_LED_TOPIC) == 0) { //Verificar si el mensaje es para controlar los LEDs
+  if (strcmp(topic, CONTROL_LED_TOPIC) == 0 || strcmp(topic, CONTROL_LED_TOPIC_1) == 0) { //Verificar si el mensaje es para controlar los LEDs
     if (mensaje == "1") { 
       digitalWrite(ledPin, HIGH);  // Encender LED en pin 5
       digitalWrite(ledPin2, LOW);  // Apagar LED en pin 18
@@ -115,6 +115,7 @@ void reconnect() { //Función en caso de que se pierda la conexión con el servi
     if (client.connect("ESP32Client", mqtt_username, mqtt_password)) { 
       Serial.println("connected"); 
       client.subscribe(CONTROL_LED_TOPIC); //Suscribirse nuevamente al tópico MQTT
+      client.subscribe(CONTROL_LED_TOPIC_1); //Suscribirse a control-led-esp-1
     } else { 
       Serial.print("failed, rc="); 
       Serial.print(client.state()); 
